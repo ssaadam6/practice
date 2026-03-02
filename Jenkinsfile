@@ -1,19 +1,16 @@
 pipeline {
-    agent any 
-   pararamets {
-    string(username:"", defalutValue:"", descrption:"Verify yourself")
+    agent any
 
-   }
-   stages {
-            stage('node1'){
-                steps{
-                    sh '''
-                    ls -lrt 
+    parameters {
+        string(name: "username", defaultValue: "", description: "Verify yourself")
+    }
 
-                    '''
-                }
+    stages {
+        stage('node1') {
+            steps {
+                echo "User is ${params.username}"
+                sh 'ls -lrt'
             }
-   }
-
-
+        }
+    }
 }
