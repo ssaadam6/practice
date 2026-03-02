@@ -1,5 +1,5 @@
 pipeline {
-    stages none
+    stages any
     stages{
         stage('Stages1'){
             steps{
