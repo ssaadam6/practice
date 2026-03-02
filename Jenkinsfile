@@ -1,7 +1,7 @@
 pipeline {
     agent any 
    pararamets{
-    string(username: defalutValue:"" descrption:"Verify yourself")
+    string(username:"", defalutValue:"", descrption:"Verify yourself")
 
    }
    stages{
