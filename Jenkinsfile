@@ -1,10 +1,10 @@
 pipeline {
     agent any 
-   pararamets{
+   pararamets {
     string(username:"", defalutValue:"", descrption:"Verify yourself")
 
    }
-   stages{
+   stages {
             stage('node1'){
                 steps{
                     sh '''
