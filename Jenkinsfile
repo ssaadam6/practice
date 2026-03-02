@@ -2,15 +2,38 @@ pipeline {
     agent any
 
     parameters {
-        string(name: "username", defaultValue: "", description: "Verify yourself")
+        string(name: 'USERNAME', defaultValue: 'Guest', description: 'Enter your name')
     }
 
     stages {
-        stage('node1') {
+        stage('Print Message') {
             steps {
-                echo "User is ${params.username}"
+                echo "Hello, ${params.USERNAME}!"
+            }
+        }
+
+        stage('List Files') {
+            steps {
                 sh 'ls -lrt'
             }
         }
+
+        stage('Done') {
+            steps {
+                echo "Pipeline finished stages."
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Build was SUCCESSFUL ✅"
+        }
+        failure {
+            echo "Build has FAILED ❌"
+        }
+        // always {
+        //     echo "This runs every time."
+        // }
     }
 }
