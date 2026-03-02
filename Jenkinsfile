@@ -1,19 +1,19 @@
 pipeline {
-    stages none
-    stages{
-        stage('Stages1'){
-            steps{
-            echo"hello there"
+    agent any 
+   pararamets{
+    string(username: defalutValue:"" descrption:"Verify yourself")
 
-    
-        }
+   }
+   stages{
+            stage('node1'){
+                steps{
+                    sh '''
+                    ls -lrt 
 
-        }
-        
-        stage('stage2'){
-            steps{
-                echo"hi there"
+                    '''
+                }
             }
-        }
-    }
+   }
+
+
 }
