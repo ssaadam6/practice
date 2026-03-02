@@ -5,10 +5,6 @@ pipeline {
         string(name: 'USERNAME', defaultValue: 'Guest', description: 'Enter your name')
     }
 
-    options {
-        timeout(time: 5, unit: 'MINUTES') // Pipeline will stop after 5 minutes
-    }
-
     stages {
         stage('Print Message') {
             steps {
@@ -23,11 +19,14 @@ pipeline {
         }
 
         stage('Conditional Stage') {
-            when {
-                expression { params.USERNAME != 'Guest' }
-            }
             steps {
-                echo "Hello ${params.USERNAME}, Kindly verify yourself!"
+                script {
+                    if (params.USERNAME != 'Guest') {
+                        echo "Hello ${params.USERNAME}, you are not the default Guest!"
+                    } else {
+                        echo "User identification FAILED ❌"
+                    }
+                }
             }
         }
 
@@ -44,9 +43,6 @@ pipeline {
         }
         failure {
             echo "Build has FAILED ❌"
-        }
-        aborted {
-            echo "Build was ABORTED ⏹️"
         }
         // always {
         //     echo "This runs every time."
