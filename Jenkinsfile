@@ -12,7 +12,7 @@ pipeline {
                 echo "Hello, ${params.USERNAME}!"
                 echo "Selected branch: ${params.BRANCH_SELECT}"
             }
-        }
+        
         
         stage('Conditional Commands') {
             when {
@@ -50,7 +50,6 @@ pipeline {
                 }
             }
         }
-    }
     
     post {
         always {
