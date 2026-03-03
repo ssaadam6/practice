@@ -25,9 +25,9 @@ pipeline {
                         ls -lrt
                          pwd
                          '''
-                    
-                }
-            }
+                    }
+        }
+    }
         stage('Parallel Tasks') {
             when {
                 // Only run parallel stage if 'jenkinsfolder' branch is selected
