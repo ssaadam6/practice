@@ -3,63 +3,58 @@ pipeline {
     
     parameters {
         string(name: 'USERNAME', defaultValue: 'Guest', description: 'Enter your name')
+        choice(name: 'BRANCH_SELECT', choices: ['main', 'jenkinsfolder', 'develop'], description: 'Select branch')
     }
     
     stages {
         stage('Print Message') {
             steps {
                 echo "Hello, ${params.USERNAME}!"
+                echo "Selected branch: ${params.BRANCH_SELECT}"
             }
         }
         
-        stage('Privileged Operations') {
+        stage('Conditional Commands') {
             when {
-                allOf {
-                    expression { params.USERNAME != null }
-                    expression { params.USERNAME.trim() != '' }
-                    expression { params.USERNAME != 'Guest' }
-                }
+                // Only run this stage if 'jenkinsfolder' branch is selected
+                expression { params.BRANCH_SELECT == 'jenkinsfolder' }
             }
             steps {
-                echo "✅ User '${params.USERNAME}' validated - executing privileged commands"
+                echo "Running commands because 'jenkinsfolder' branch is selected..."
                 sh '''
-                    echo "=== Privileged Block ==="
-                    ls -lrt
-                    pwd
-                    whoami
-                    echo "=== End Privileged Block ==="
-                '''
-            }
-        }
-        
-        stage('Conditional Stage') {
-            steps {
-                script {
-                    if (params.USERNAME != 'Guest') {
-                        echo "Hello ${params.USERNAME}, you are not the default Guest!"
-                    } else {
-                        echo "User identification FAILED"
+                        ls -lrt
+                         pwd
+                         '''
                     }
                 }
             }
         }
         
-        stage('Done') {
-            steps {
-                echo "Pipeline finished stages."
+        stage('Parallel Tasks') {
+            when {
+                // Only run parallel stage if 'jenkinsfolder' branch is selected
+                expression { params.BRANCH_SELECT == 'jenkinsfolder' }
+            }
+            parallel {
+                stage('Task A') {
+                    steps {
+                        echo "Running Task A"
+                        sh 'echo "Task A completed"'
+                    }
+                }
+                stage('Task B') {
+                    steps {
+                        echo "Running Task B"
+                        sh 'echo "Task B completed"'
+                    }
+                }
             }
         }
     }
     
     post {
-        success {
-            echo "Build was SUCCESSFUL ✅"
-        }
-        failure {
-            echo "Build has FAILED ❌"
-        }
         always {
-            echo "Pipeline completed for user: ${params.USERNAME}"
+            echo "Pipeline finished!"
         }
     }
 }
