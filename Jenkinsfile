@@ -28,7 +28,7 @@ pipeline {
                     
                 }
             }
-        }
+        
         
         stage('Parallel Tasks') {
             when {
