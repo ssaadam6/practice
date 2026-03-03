@@ -5,7 +5,17 @@ pipeline {
         choice(name: 'BRANCH_SELECT', choices: ['main', 'jenkinsfolder', 'develop'], description: 'Select branch')
     }
     
+
     stages {
+
+        stage('checkout'){
+            steps{
+                git branch: 'devlop', url: 'https://github.com/ssaadam6/practice.git'
+            }
+        }
+
+
+
         stage('Print Message') {
             steps {
                 echo "Hello, ${params.USERNAME}!"
