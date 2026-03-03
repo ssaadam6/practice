@@ -12,8 +12,6 @@ pipeline {
             }
         }
         
-        }
-        
         stage('Privileged Operations') {
             when {
                 allOf {
