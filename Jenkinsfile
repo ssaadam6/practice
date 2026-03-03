@@ -2,7 +2,7 @@ pipeline {
     agent any
     parameters {
         string(name: 'USERNAME', defaultValue: 'Guest', description: 'Enter your name')
-        choice(name: 'BRANCH_SELECT', choices: ['main', 'jenkinsfolder', 'develop'], description: 'Select branch')
+        choice(name: 'BRANCH_SELECT', choices: ['main', 'jenkinsfolder', 'devlop'], description: 'Select branch')
     }
     
     stages {
