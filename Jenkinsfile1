@@ -25,6 +25,16 @@ pipeline {
                              '''
                     }
                 }
+                stage('macos'){
+                    steps {
+                        sh'''
+                            echo "macos"
+                            pwd
+                            ps -ef
+
+                        '''
+                    }
+                }
             }
         }
     }
