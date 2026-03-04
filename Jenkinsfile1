@@ -12,6 +12,7 @@ pipeline {
                     steps {
                         sh '''
                             echo "linux"
+                            sleep 150
                              ls -lrt
                              pwd
                              '''
@@ -29,6 +30,7 @@ pipeline {
                     steps {
                         sh'''
                             echo "macos"
+                            sleep 200
                             pwd
                             ps -ef
 
