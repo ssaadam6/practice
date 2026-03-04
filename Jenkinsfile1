@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    
+    options {
+        parallelsAlwaysFailFast()     
+    }
+
+    stages {
+        stage('parallel stages') {
+            parallel {
+                stage('Linux') {
+                    steps {
+                        sh '''
+                            echo "linux"
+                             ls -lrt
+                             pwd
+                             '''
+                    }
+                }
+                stage('windows') {
+                    steps {
+                        bat '''
+                            echo "windows" 
+                             cd
+                             '''
+                    }
+                }
+            }
+        }
+    }
+}
