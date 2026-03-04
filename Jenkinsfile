@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('checkout'){
             steps{
-                // Use the selected parameter for Git branch
+
                 git branch: 'devlop', url: 'https://github.com/ssaadam6/practice.git'
             }
         }
