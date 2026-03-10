@@ -12,7 +12,7 @@ pipeline {
                     sh '''
                         mkdir -p /home/ubuntu/Jenkinsbackup
                         TIMESTAMP=$(date +%Y%m%d)
-                        cp -r /var/lib/jenkins /home/ubuntu/Jenkinsbackup/jenkins_${TIMESTAMP}
+                         cp -r /var/lib/jenkins /opt/jenkins-backup/jenkins_${TIMESTAMP}
                         
                         # Remove backups older than 7 days
                         find /home/ubuntu/Jenkinsbackup -type d -name "jenkins_*" -mtime +7 -exec rm -rf {} + 2>/dev/null || true
