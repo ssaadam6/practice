@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Jenkins Backup') {
             steps {
-                node('master') {  // Explicitly run on master
+                node('Controller') {  // Explicitly run on master
                     sh '''
                         mkdir -p /home/ubuntu/Jenkinsbackup
                         TIMESTAMP=$(date +%Y%m%d)
