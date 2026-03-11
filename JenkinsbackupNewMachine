@@ -1,0 +1,67 @@
+pipeline {
+    agent { label 'Controller' }
+
+    triggers {
+        cron('H 2 * * *')
+    }
+
+    environment {
+        BACKUP_SERVER = '172.31.36.153'
+        BACKUP_PATH = '/home/ubuntu/Jenkinsbackup'
+    }
+
+    stages {
+        stage('Jenkins Backup') {
+            steps {
+                sshagent(['ubuntu (awsdevops)']) {
+                    sh '''
+                        set -e
+                        
+                        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                        BACKUP_NAME="jenkins_$TIMESTAMP.tar.gz"
+                        
+                        echo "Starting backup: $BACKUP_NAME"
+                        
+                        # Create archive directly from /var/lib/jenkins
+                        cd /var/lib
+                        tar -czf /tmp/$BACKUP_NAME \
+                            --exclude='./jenkins/workspace/*' \
+                            --exclude='./jenkins/cache/*' \
+                            jenkins/
+                        
+                        # Create backup directory on remote server
+                        ssh -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            ubuntu@$BACKUP_SERVER \
+                            "mkdir -p $BACKUP_PATH"
+                        
+                        # Transfer backup to remote server
+                        scp -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            /tmp/$BACKUP_NAME \
+                            ubuntu@$BACKUP_SERVER:$BACKUP_PATH/
+                        
+                        # Cleanup old backups (older than 7 days)
+                        ssh -o StrictHostKeyChecking=no \
+                            ubuntu@$BACKUP_SERVER \
+                            "find $BACKUP_PATH -name 'jenkins_*.tar.gz' -mtime +7 -delete 2>/dev/null || true"
+                        
+                        # Cleanup local temp file
+                        rm -f /tmp/$BACKUP_NAME
+                        
+                        echo "✅ Backup completed: $BACKUP_NAME stored on $BACKUP_SERVER"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        failure {
+            echo ' Backup failed! Check SSH connectivity and credentials.'
+        }
+        success {
+            echo ' Jenkins backup completed successfully!'
+        }
+    }
+}
