@@ -2,30 +2,109 @@ pipeline {
     agent { label 'Controller' }
 
     triggers {
-        cron('50 17 * * *')
+        cron('30 12 * * *')
     }
 
     environment {
         BACKUP_SERVER = '172.31.36.153'
+        BACKUP_PATH = '/home/ubuntu/Jenkinsbackup'
     }
 
     stages {
-        stage('Sync Jenkins') {
+        stage('Backup Master') {
             steps {
                 sshagent(['awsdevops']) {
                     sh '''
-                        # Sync everything except workspace and cache
-                        sudo rsync -avz --delete \
-                            --exclude='workspace/' \
-                            --exclude='cache/' \
-                            /var/lib/jenkins/ \
-                            ubuntu@$BACKUP_SERVER:/var/lib/jenkins/
+                        set -e
                         
-                        # Restart Jenkins to load new configs
-                        ssh ubuntu@$BACKUP_SERVER "sudo systemctl restart jenkins"
+                        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                        BACKUP_NAME="jenkins_$TIMESTAMP.tar.gz"
+                        
+                        echo "Starting backup: $BACKUP_NAME"
+                        
+                        # Create archive from /var/lib/jenkins
+                        cd /var/lib
+                        tar -czf /tmp/$BACKUP_NAME \
+                            --exclude='./jenkins/workspace/*' \
+                            --exclude='./jenkins/cache/*' \
+                            jenkins/
+                        
+                        # Create backup directory on remote server
+                        ssh -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            ubuntu@$BACKUP_SERVER \
+                            "mkdir -p $BACKUP_PATH"
+                        
+                        # Transfer backup to remote server
+                        scp -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            /tmp/$BACKUP_NAME \
+                            ubuntu@$BACKUP_SERVER:$BACKUP_PATH/
+                        
+                        # Save backup name for next stage
+                        echo "$BACKUP_NAME" > /tmp/latest_backup.txt
+                        
+                        # Cleanup local temp file
+                        rm -f /tmp/$BACKUP_NAME
+                        
+                        echo "✅ Backup completed: $BACKUP_NAME"
                     '''
                 }
             }
+        }
+        
+        stage('Restore to Backup Node') {
+            steps {
+                sshagent(['awsdevops']) {
+                    sh '''
+                        set -e
+                        
+                        # Get the backup name we just created
+                        BACKUP_NAME=$(cat /tmp/latest_backup.txt)
+                        
+                        echo "Restoring $BACKUP_NAME to backup Jenkins..."
+                        
+                        # Stop Jenkins, extract backup, start Jenkins (all via SSH)
+                        ssh -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            ubuntu@$BACKUP_SERVER \
+                            "echo 'Stopping Jenkins...' && \
+                             sudo systemctl stop jenkins && \
+                             sleep 3 && \
+                             echo 'Extracting backup...' && \
+                             sudo rm -rf /var/lib/jenkins/* && \
+                             sudo tar -xzf $BACKUP_PATH/$BACKUP_NAME -C / && \
+                             sudo chown -R jenkins:jenkins /var/lib/jenkins && \
+                             echo 'Starting Jenkins...' && \
+                             sudo systemctl start jenkins && \
+                             echo '✅ Restore complete!'"
+                        
+                        rm -f /tmp/latest_backup.txt
+                    '''
+                }
+            }
+        }
+        
+        stage('Cleanup Old Backups') {
+            steps {
+                sshagent(['awsdevops']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no \
+                            ubuntu@$BACKUP_SERVER \
+                            "find $BACKUP_PATH -name 'jenkins_*.tar.gz' -mtime +7 -delete 2>/dev/null || true"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        failure {
+            echo '❌ Backup or Restore failed! Check SSH connectivity.'
+        }
+        success {
+            echo '✅ Master Jenkins backed up and restored to backup node!'
+            echo "   Check: http://$BACKUP_SERVER:8080"
         }
     }
 }
