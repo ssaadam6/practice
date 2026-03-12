@@ -2,7 +2,8 @@ pipeline {
     agent { label 'Controller' }
 
     triggers {
-        cron('H 22 * * *')
+        tz=Asia/Kolkata
+        cron('30 11 * * *')
     }
 
     environment {
