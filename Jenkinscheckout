@@ -1,65 +1,29 @@
 pipeline {
-    agent any
-    
+    agent { label 'Controller' }
+
+    triggers {
+        cron('25 18 * * *')
+    }
+
+    environment {
+        BACKUP_SERVER = '172.31.36.153'
+    }
+
     stages {
-        stage('Checkout Multiple Branches') {
+        stage('Copy and Restart') {
             steps {
-                script {
-                    // Current branch is already checked out by Jenkins
-                    echo "Current Branch: ${env.BRANCH_NAME}"
-                    echo "Commit: ${env.GIT_COMMIT}"
-                    
-                    // Checkout additional branches in subdirectories
-                    checkoutAdditionalBranch('main', 'target_branch')
-                    checkoutAdditionalBranch('devlop', 'develop_branch')
-                }
-            }
-        }
-        
-        stage('Build') {
-            // This stage only runs when Jenkins triggers the job for this branch
-            // Jenkins Multibranch Pipeline automatically triggers only for the branch with new commits
-            when {
-                // Optional: Add filters for which branches should build
-                anyOf {
-                    branch 'main'
-                    branch 'devlop'
-                    branch 'jenkinsfolder'
-                    branch 'jenkinsbackup'
-                    branch 'jenkisbackupnew'
-                    branch pattern: "feature/.*", comparator: "REGEXP"
-                    branch pattern: "PR-\\d+", comparator: "REGEXP"
-                }
-            }
-            steps {
-                script {
-                    echo "🔨 Building ${env.BRANCH_NAME}"
-                    sh 'make build' // Your build command
-                }
-            }
-        }
-        
-        stage('Test with Multiple Branches') {
-            steps {
-                script {
-                    // Run tests using multiple checked-out branches
+                sshagent(['awsdevops']) {
                     sh '''
-                        echo "Running cross-branch tests"
-                        # Access other branches in their directories
+                        rsync -avz --delete \
+                            --exclude='workspace' \
+                            --exclude='cache' \
+                            /var/lib/jenkins/ \
+                            ubuntu@$BACKUP_SERVER:/var/lib/jenkins/
+
+                        ssh ubuntu@$BACKUP_SERVER "sudo systemctl restart jenkins"
                     '''
                 }
             }
         }
-    }
-}
-
-def checkoutAdditionalBranch(String branchName, String targetDir) {
-    dir(targetDir) {
-        checkout([
-            $class: 'GitSCM',
-            branches: [[name: "*/${branchName}"]],
-            extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]],
-            userRemoteConfigs: [[url: env.GIT_URL, credentialsId: 'git-credentials']]
-        ])
     }
 }
