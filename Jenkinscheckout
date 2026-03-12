@@ -2,7 +2,7 @@ pipeline {
     agent { label 'Controller' }
 
     triggers {
-        cron('25 18 * * *')
+        cron('35 18 * * *')
     }
 
     environment {
@@ -10,17 +10,22 @@ pipeline {
     }
 
     stages {
-        stage('Copy and Restart') {
+        stage('Sync to Backup') {
             steps {
                 sshagent(['awsdevops']) {
                     sh '''
-                        rsync -avz --delete \
+                        # Tell rsync to use ssh with no strict checking
+                        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
                             --exclude='workspace' \
                             --exclude='cache' \
                             /var/lib/jenkins/ \
                             ubuntu@$BACKUP_SERVER:/var/lib/jenkins/
 
-                        ssh ubuntu@$BACKUP_SERVER "sudo systemctl restart jenkins"
+                        # SSH to restart Jenkins
+                        ssh -o StrictHostKeyChecking=no \
+                            -o UserKnownHostsFile=/dev/null \
+                            ubuntu@$BACKUP_SERVER \
+                            "sudo systemctl restart jenkins"
                     '''
                 }
             }
