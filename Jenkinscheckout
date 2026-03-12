@@ -2,7 +2,7 @@ pipeline {
     agent { label 'Controller' }
 
     triggers {
-        cron('35 18 * * *')
+        cron('45 17 * * *')
     }
 
     environment {
@@ -14,14 +14,12 @@ pipeline {
             steps {
                 sshagent(['awsdevops']) {
                     sh '''
-                        # Tell rsync to use ssh with no strict checking
                         rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
                             --exclude='workspace' \
                             --exclude='cache' \
                             /var/lib/jenkins/ \
                             ubuntu@$BACKUP_SERVER:/var/lib/jenkins/
 
-                        # SSH to restart Jenkins
                         ssh -o StrictHostKeyChecking=no \
                             -o UserKnownHostsFile=/dev/null \
                             ubuntu@$BACKUP_SERVER \
